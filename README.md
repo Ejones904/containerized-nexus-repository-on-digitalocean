@@ -95,19 +95,18 @@ Deployment was validated by:
 
 | Screenshot | Description |
 |------------|-------------|
-| 07-07-30 | DigitalOcean Ubuntu Droplet created |
-| 07-07-31 | Firewall configuration updated |
-| 07-07-32 | SSH connection established |
-| 07-07-33 | Docker installed on Ubuntu |
-| 07-07-34 | Nexus Repository Manager container deployed |
-| 07-07-35 | Nexus web interface verified |
-| 07-07-36 | Container administration using Docker Exec |
-| 07-07-37 | Docker container validation |
-| 07-07-38 | Docker Volumes listed |
-| 07-07-39 | Docker Volume inspection |
-| 07-07-40 | Persistent storage directory verified |
-| 07-07-41 | Initial Nexus administrator password retrieved |
-
+| 07-07-30 | DigitalOcean Droplet provisioned |
+| 07-07-31 | Droplet added to DigitalOcean Cloud Firewall |
+| 07-07-32 | SSH connection established to the cloud server |
+| 07-07-33 | Linux packages updated and Docker installed using Snap |
+| 07-07-34 | Persistent `nexus-data` volume created and Nexus container deployed from the official Sonatype image |
+| 07-07-35 | Port 8081 verified with `netstat` and Nexus container status confirmed with `docker ps` |
+| 07-07-36 | Nexus Repository Manager web interface successfully accessed from a browser |
+| 07-07-37 | Nexus container accessed with `docker exec` and runtime user verified as `nexus` |
+| 07-07-38 | Persistent Docker volume verified using `docker volume ls` |
+| 07-07-39 | `nexus-data` volume configuration inspected |
+| 07-07-40 | Nexus data verified inside the Docker volume's host storage location |
+| 07-07-41 | Initial Nexus administrator password retrieved from `/nexus-data/admin.password` |
 ---
 
 ## Key Achievements
