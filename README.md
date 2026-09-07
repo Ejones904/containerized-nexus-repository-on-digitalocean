@@ -1,171 +1,353 @@
-# Containerized Nexus Repository Manager on DigitalOcean
+# Cloud-Hosted Artifact Repository with Sonatype Nexus
 
-## Overview
+A cloud-hosted artifact repository environment built with **Sonatype Nexus Repository Manager** on a DigitalOcean Linux server.
 
-Enterprise software development depends on reliable artifact repositories to securely store and distribute software packages, container images, and build artifacts. This project demonstrates deploying Sonatype Nexus Repository Manager as a Docker container on a DigitalOcean Ubuntu Droplet while implementing persistent storage, Linux administration, and infrastructure validation.
-
----
-
-## Business Context
-
-Organizations require centralized artifact repositories to improve software delivery, support CI/CD pipelines, and maintain version-controlled software assets. Containerizing Nexus Repository Manager simplifies deployment while Docker Volumes ensure repository data persists across container restarts and infrastructure maintenance.
-
-This project demonstrates how containerization and cloud infrastructure can be combined to deploy enterprise repository management services.
+The project demonstrates artifact lifecycle management, repository access control, Java build-tool integration, cloud-hosted infrastructure, and troubleshooting around authenticated artifact publishing.
 
 ---
 
-## Technical Solution
+## Project Overview
 
-Provisioned a DigitalOcean Ubuntu Droplet and configured firewall rules for secure remote administration. Installed Docker, created a persistent Docker Volume, and deployed Sonatype Nexus Repository Manager as a containerized application. Validated the deployment by confirming the Nexus web interface, inspecting Docker volumes, verifying host storage, accessing the running container, and retrieving the initial administrator password from the persistent data directory.
+The goal of this project was to build a centralized artifact repository that could receive and store Java application packages produced by multiple build tools.
+
+The environment was designed to support:
+
+* Sonatype Nexus Repository Manager
+* Java artifact storage
+* Gradle publishing
+* Maven publishing
+* repository users and roles
+* firewall-controlled access
+* Linux-based service administration
+
+Rather than storing build outputs only on a developer workstation, the project introduced a dedicated artifact-management layer that could serve as part of a larger CI/CD workflow.
 
 ---
 
-## Solution Architecture
+## Architecture
 
 ```text
-                 Administrator
-                       │
-                    SSH (22)
-                       │
-                       ▼
-          DigitalOcean Ubuntu Droplet
-                       │
-                  Docker Engine
-                       │
-             Nexus Repository Manager
-                       │
-             Docker Volume (nexus-data)
-                       │
-               Persistent Host Storage
-                       │
-                Nexus Repository Data
+                     Developer / Build Tool
+                              |
+                    +---------+---------+
+                    |                   |
+                    v                   v
+                 Gradle              Maven
+                    |                   |
+                    +---------+---------+
+                              |
+                              v
+                    Sonatype Nexus Repository
+                              |
+                              v
+                   DigitalOcean Linux Server
+                              |
+                              v
+                    Repository Artifact Store
+```
+
+Access to the Nexus server was controlled through the cloud firewall and repository-level authentication and authorization.
+
+---
+
+## Technology Stack
+
+| Technology                        | Purpose                                |
+| --------------------------------- | -------------------------------------- |
+| Sonatype Nexus Repository Manager | Artifact repository management         |
+| DigitalOcean                      | Cloud infrastructure                   |
+| Ubuntu Linux                      | Nexus host operating system            |
+| Java 17                           | Nexus runtime                          |
+| Gradle                            | Java build and artifact publishing     |
+| Maven                             | Java packaging and artifact deployment |
+| SSH                               | Server administration                  |
+| Git / GitHub                      | Source control                         |
+| Cloud Firewall                    | Network access control                 |
+
+---
+
+## Engineering Decisions
+
+### Centralized Artifact Management
+
+A dedicated Nexus server was introduced to separate source code from compiled artifacts.
+
+Instead of treating JAR files as local build outputs, artifacts could be published into a centralized repository where they could be stored, retrieved, and managed independently from the source repository.
+
+This represents the same separation commonly used in CI/CD systems:
+
+```text
+Source Code
+    ↓
+Build
+    ↓
+Artifact
+    ↓
+Repository
+    ↓
+Deployment
 ```
 
 ---
 
-## Technologies
+### Support for Multiple Build Tools
 
-- Docker
-- Sonatype Nexus Repository Manager
-- DigitalOcean
-- Ubuntu Linux
-- Docker Volumes
-- SSH
-- Linux Administration
-- Cloud Networking
-- Git
-- GitHub
+Both **Gradle** and **Maven** were configured to publish artifacts into Nexus.
+
+This validated that the repository was functioning as an independent artifact-management service rather than being tied to a single build workflow.
 
 ---
 
-## Deployment Workflow
+### Repository Access Control
 
-1. Provisioned a DigitalOcean Ubuntu Droplet.
-2. Updated firewall rules.
-3. Connected to the server using SSH.
-4. Installed Docker.
-5. Created a persistent Docker Volume.
-6. Pulled the official Sonatype Nexus image.
-7. Started Nexus as a Docker container.
-8. Verified container health.
-9. Confirmed port 8081 was listening.
-10. Accessed Nexus through the browser.
-11. Accessed the running container.
-12. Verified Docker Volume configuration.
-13. Inspected persistent storage.
-14. Retrieved the initial administrator password.
+Nexus users, roles, and repository privileges were configured to control who could publish artifacts.
+
+This became an important part of the project because a successful application build did not automatically mean the user had permission to upload that artifact.
+
+Repository authorization therefore had to be validated separately from the build process itself.
 
 ---
 
-## Deployment Validation
+### Cloud-Level Network Controls
 
-Deployment was validated by:
+DigitalOcean firewall rules were configured so that only the required server access was exposed.
 
-- Confirming the Nexus container was running.
-- Verifying port 8081 was listening.
-- Successfully accessing the Nexus web interface.
-- Confirming Docker Volume creation.
-- Inspecting Docker Volume metadata.
-- Verifying persistent storage on the host.
-- Retrieving the generated administrator password.
+This separated network-level security from application-level Nexus permissions.
 
----
-
-## Screenshots
-
-| Screenshot | Description |
-|------------|-------------|
-| 07-07-30 | DigitalOcean Droplet provisioned |
-| 07-07-31 | Droplet added to DigitalOcean Cloud Firewall |
-| 07-07-32 | SSH connection established to the cloud server |
-| 07-07-33 | Linux packages updated and Docker installed using Snap |
-| 07-07-34 | Persistent `nexus-data` volume created and Nexus container deployed from the official Sonatype image |
-| 07-07-35 | Port 8081 verified with `netstat` and Nexus container status confirmed with `docker ps` |
-| 07-07-36 | Nexus Repository Manager web interface successfully accessed from a browser |
-| 07-07-37 | Nexus container accessed with `docker exec` and runtime user verified as `nexus` |
-| 07-07-38 | Persistent Docker volume verified using `docker volume ls` |
-| 07-07-39 | `nexus-data` volume configuration inspected |
-| 07-07-40 | Nexus data verified inside the Docker volume's host storage location |
-| 07-07-41 | Initial Nexus administrator password retrieved from `/nexus-data/admin.password` |
----
-
-## Key Achievements
-
-- Addressed the business need for centralized artifact repository infrastructure.
-- Deployed Sonatype Nexus Repository Manager as a Docker container.
-- Configured persistent storage using Docker Volumes.
-- Provisioned and administered Linux infrastructure in DigitalOcean.
-- Validated container networking, persistent storage, and service availability.
-- Retrieved and verified the initial Nexus administrator credentials.
-- Produced comprehensive GitHub documentation covering deployment, validation, troubleshooting, and infrastructure administration.
-
----
-
-## Lessons Learned
-
-This project reinforced several important infrastructure concepts:
-
-- Enterprise applications can be deployed and managed as containers.
-- Persistent storage is critical for stateful infrastructure services.
-- Linux administration remains fundamental in cloud environments.
-- Infrastructure validation should occur at every deployment stage.
-- Containerized services simplify deployment while maintaining portability.
-
----
-
-## Skills Demonstrated
-
-- Docker
-- Linux Administration
-- DigitalOcean
-- Sonatype Nexus Repository Manager
-- Docker Volumes
-- SSH
-- Cloud Infrastructure
-- Container Administration
-- Infrastructure Validation
-- Technical Documentation
-
----
-
-## Repository Structure
+The resulting access model consisted of:
 
 ```text
-containerized-nexus-repository-on-digitalocean/
-│
-├── README.md
-├── commands.md
-├── screenshots/
-└── .gitignore
+Cloud Firewall
+      ↓
+Linux Host
+      ↓
+Nexus Authentication
+      ↓
+Nexus Role / Privileges
+      ↓
+Artifact Repository
 ```
 
 ---
 
-## Author
+## Implementation
 
-**Ethan Jones**
+A DigitalOcean Ubuntu server was provisioned and prepared as the Nexus host.
 
-Cloud & DevOps Portfolio
+The implementation included:
 
-- GitHub: https://github.com/Ejones904
-- LinkedIn: https://www.linkedin.com/in/ethanjones-jacksonville
+* configuring the cloud firewall
+* installing the required Java runtime
+* installing Sonatype Nexus Repository Manager
+* configuring the Linux account used to run Nexus
+* starting and validating the Nexus service
+* configuring Nexus users and repository roles
+* integrating Gradle with the repository
+* publishing and validating a Gradle artifact
+* integrating Maven with the repository
+* packaging and publishing a Maven artifact
+* validating published artifacts through the Nexus interface
+
+Detailed build steps and commands are preserved in [`IMPLEMENTATION.md`](IMPLEMENTATION.md).
+
+---
+
+## Artifact Publishing Workflow
+
+The artifact lifecycle implemented in this project follows this pattern:
+
+```text
+Application Source
+       |
+       v
+ Gradle / Maven
+       |
+       v
+ Application Build
+       |
+       v
+    JAR Artifact
+       |
+       v
+Authenticated Publish
+       |
+       v
+ Sonatype Nexus
+       |
+       v
+ Central Artifact Store
+```
+
+This provides a clean separation between application development, artifact generation, and artifact storage.
+
+---
+
+## Troubleshooting
+
+### Gradle Artifact Publish Failure
+
+One of the most significant issues occurred when the Gradle build completed successfully but the artifact could not be published to Nexus.
+
+The failure initially appeared to be part of the build workflow, but investigation showed that application compilation and repository publishing were separate stages.
+
+The root cause was insufficient Nexus permissions for the publishing user.
+
+The repository role and privileges were reviewed and updated to allow the required artifact operations.
+
+After correcting the authorization configuration, the same publishing workflow completed successfully.
+
+![Gradle Publish Failure](screenshots/22-troubleshoot-gradle-publish.png)
+
+![Gradle Publish Success](screenshots/23-publish-success.png)
+
+This reinforced an important troubleshooting distinction:
+
+```text
+Build Failure
+     ≠
+Repository Authentication Failure
+     ≠
+Repository Authorization Failure
+```
+
+Each layer has to be investigated independently.
+
+---
+
+## Validation
+
+Validation was performed at several layers.
+
+### Repository Access
+
+Confirmed that the Nexus web interface was reachable through the configured cloud firewall.
+
+### User and Role Configuration
+
+Verified that repository users were assigned the required roles and privileges.
+
+<!-- Use whichever screenshot most clearly shows the final permissions state. -->
+
+![Nexus Role Configuration](screenshots/17--create-user-role.png)
+
+### Gradle Publishing
+
+Confirmed that the Gradle application could build and publish its artifact after the permissions issue was resolved.
+
+![Gradle Artifact in Nexus](screenshots/24-UI-validation.png)
+
+### Maven Publishing
+
+The Maven application was packaged into a JAR and deployed to Nexus using Maven.
+
+![Maven Deploy Success](screenshots/28--mvn-deploy-success.png)
+
+The resulting artifact was then verified inside the Nexus repository interface.
+
+![Maven Artifact Validation](screenshots/29--ui-validation.png)
+
+Together, these tests validated the complete artifact path:
+
+```text
+Source Code
+    ↓
+Build Tool
+    ↓
+JAR Generation
+    ↓
+Authenticated Repository Upload
+    ↓
+Nexus Artifact Storage
+```
+
+---
+
+## Security Considerations
+
+The project includes several security controls appropriate for a hands-on engineering environment:
+
+* cloud firewall rules limiting server access
+* authenticated Nexus users
+* role-based repository permissions
+* separation between administrative and publishing privileges
+* Linux ownership and service configuration
+
+For a production implementation, additional controls would be required.
+
+These would include:
+
+* TLS/HTTPS for Nexus access
+* stronger secret-management practices
+* least-privilege service accounts
+* restricting administrative access to trusted networks
+* repository backup and recovery procedures
+* audit logging and access review
+* external identity-provider integration where appropriate
+* regular operating system and Nexus patching
+
+---
+
+## Operational Considerations
+
+The Nexus service required manual administration during the project, including restarting the application after periods when the environment was not in use.
+
+A more mature deployment would run Nexus as a managed Linux service so that service startup, restart behavior, and failure handling could be controlled through the operating system.
+
+For example, a future implementation could use `systemd` to support:
+
+* automatic startup after reboot
+* standardized service status checks
+* restart policies
+* centralized service logs
+
+---
+
+## What This Project Demonstrates
+
+This project demonstrates practical experience with:
+
+* artifact repository administration
+* Sonatype Nexus Repository Manager
+* cloud-hosted Linux infrastructure
+* Java artifact lifecycle management
+* Gradle publishing
+* Maven publishing
+* role-based access control
+* repository permissions
+* firewall configuration
+* SSH administration
+* troubleshooting authorization failures
+* validating artifacts across multiple build systems
+
+---
+
+## Future Enhancements
+
+Potential improvements include:
+
+* running Nexus as a `systemd` service
+* enabling TLS/HTTPS
+* integrating Jenkins with Nexus
+* automating Nexus installation and configuration
+* implementing repository backup procedures
+* defining artifact retention policies
+* adding infrastructure monitoring
+* integrating centralized logging
+* externalizing credentials
+* provisioning the environment with Terraform
+
+---
+
+## Repository Documentation
+
+* [`README.md`](README.md) — engineering overview, design decisions, and validation
+* [`IMPLEMENTATION.md`](IMPLEMENTATION.md) — detailed implementation history
+
+---
+
+## Engineering Outcome
+
+This project established a centralized artifact-management layer capable of receiving Java packages from multiple build systems.
+
+More importantly, the implementation demonstrated that successful software delivery depends on more than compiling an application. Network access, authentication, authorization, artifact storage, and validation all operate as separate layers that must work together for a complete delivery workflow.
+
